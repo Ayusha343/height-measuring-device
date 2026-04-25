@@ -1,0 +1,122 @@
+#include <DHT.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+#define max_distance 300
+#define DHTPIN A0     
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+LiquidCrystal_I2C lcd(0x27,16,2); 
+
+//SDA = A4, SCL = A5
+const int trigPin = 9;
+const int echoPin = 10;
+long duration;
+float distance;
+float inch;
+float inch2;
+float inch3;
+float temp;
+float humi;
+float spid;
+float ground;
+float height;
+int redLight = 8;
+int greenLight = 7;
+int ft;
+int i;
+
+void setup() 
+{
+  lcd.begin(16,2); 
+  lcd.init();
+  lcd.init();
+  lcd.backlight();
+  Serial.begin(9600);
+  dht.begin();
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(redLight, OUTPUT);
+  pinMode(greenLight, OUTPUT);
+}
+
+void loop() 
+{
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  temp = dht.readTemperature();
+  humi = dht.readHumidity();
+  duration = pulseIn(echoPin, HIGH);
+  spid = 331.3 + 0.606*temp + 0.01243 * humi;
+ 
+  i++;
+  if(i==2)
+    {
+      ground = duration*spid/20000;
+    }
+  
+  distance = duration*spid/20000;
+  height = ground - distance ;
+  ft = height/30.48;
+  inch = height*0.393701;
+  inch2 = ft*12;
+  inch3 = inch - inch2; 
+  
+
+  if (distance < 150) 
+  {
+    digitalWrite(greenLight,LOW);
+    digitalWrite(redLight,HIGH);
+  } 
+   else 
+  {
+    digitalWrite(redLight,LOW);
+    digitalWrite(greenLight,HIGH);
+    delay(500);
+    digitalWrite(greenLight,LOW);
+  }
+  
+  Serial.println(" ");
+  Serial.print("distance= ");
+  Serial.print(distance);
+  Serial.println(" cm");
+  Serial.print("humidity: ");
+  Serial.print(humi);
+  Serial.println(" %");
+  Serial.print("temp: ");
+  Serial.print(temp);
+  Serial.println(" °C");
+  Serial.print("speed: ");
+  Serial.println(spid);  
+
+  if (distance > 150)
+  {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("VACANT, STAND");
+    lcd.setCursor(0,1);
+    lcd.print("UNDER FOR HEIGHT");
+    delay(1000);
+    lcd.clear();
+  }
+  else
+  {
+    lcd.setCursor(0,0);
+    lcd.print("HEIGHT: ");
+    lcd.print(height);  
+    lcd.print(" cm");  
+    lcd.setCursor(0,1);  
+    lcd.print(ft);  
+    lcd.print(" ft");  
+    lcd.setCursor(7,1);  
+    lcd.print(inch3);  
+    lcd.print(" in");
+  }
+}

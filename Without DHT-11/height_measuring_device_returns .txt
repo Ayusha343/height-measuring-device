@@ -1,0 +1,99 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+#define max_distance 250
+
+LiquidCrystal_I2C lcd(0x27,16,2); 
+
+//SDA = A4, SCL = A5
+const int trigPin = 9;
+const int echoPin = 10;
+long duration;
+float distance;
+int height;
+int redLight = 8;
+int greenLight = 7;
+int ft;
+int i;
+float inch;
+float inch2;
+float inch3;
+float ground;
+
+void setup() 
+{
+  lcd.init();
+  lcd.init(); 
+  lcd.backlight();
+  Serial.begin(9600);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(redLight, OUTPUT);
+  pinMode(greenLight, OUTPUT);
+}
+
+void loop() 
+{
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration*0.0343/2;
+
+  i++;
+  if(i==2)
+    {
+      ground = duration*343/20000;
+    }
+  
+  height = ground - distance ;
+  ft = height/30.48;
+  inch = height*0.393701;
+  inch2 = ft*12;
+  inch3 = inch - inch2;
+  
+    if (distance < 150) 
+  {
+    digitalWrite(greenLight,LOW);
+    digitalWrite(redLight,HIGH);
+  } 
+   else 
+  {
+    digitalWrite(redLight,LOW);
+    digitalWrite(greenLight,HIGH);
+    delay(500);
+    digitalWrite(greenLight,LOW);
+  }
+  
+  Serial.println("distance= ");
+  Serial.println(distance);
+  
+  if (distance > 150)
+  {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("VACANT, STAND");
+    lcd.setCursor(0,1);
+    lcd.print("UNDER FOR HEIGHT");
+    delay(1000);
+    lcd.clear();
+  }
+  if (distance < 150)
+  {
+    lcd.setCursor(0,0);
+    lcd.print("HEIGHT: ");
+    lcd.print(height);  
+    lcd.print("cm");  
+    lcd.setCursor(0,1);  
+    lcd.print(ft);  
+    lcd.print(" ft");  
+    lcd.setCursor(7,1);  
+    lcd.print(inch3);  
+    lcd.print(" in");
+    delay(500);
+  }
+}
